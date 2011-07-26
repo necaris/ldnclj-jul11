@@ -20,14 +20,21 @@
 (defn post-signup [name email]
   (swap! signup-list conj {:name name, :email email})
   (html [:h1 "Thanks for signing up!"]
-        [:p (str "You're signed up as"
+        [:p (str "You're signed up as "
                  name
-                 "with email "
+                 " with email "
                  email)]))
 
 (defn admin-page []
   (html [:p "The people signed up so far are:"]
-        (ordered-list (map (fn [x] (str (x :name) " " (x :email))) @signup-list))))
+        (ordered-list (map-indexed (fn [i x] [:p (str (x :name)
+                                        " "
+                                        (x :email) " ") [:a {:href (str "/delete/" i)} "Delete"]])
+                           @signup-list))))
+
+(defn delete [x]
+   (swap! signup-list (fn [l] (concat (take (dec x) l) (drop x l))))
+   (html [:p "Deleted! "] [:a {:href "/admin"} "Back"]))
 
 (defroutes main-routes
   (GET "/" [] (get-signup))
@@ -35,6 +42,7 @@
   (POST "/signup" [name email]
         (post-signup name email))
   (GET "/admin" [] (admin-page))
+  (GET "/delete/:x" [x] (delete (Integer/parseInt x)))
   (route/not-found "Page not found")
   )
 
